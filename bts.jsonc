@@ -1,0 +1,16 @@
+{
+	// Better-T-Stack project configuration
+	// Used by `create-better-t-stack add` command
+	"projectName": "Huntasty",
+	"database": "postgres",
+	"orm": "drizzle",
+	"auth": "better-auth",
+	"addons": ["husky", "biome"],
+	"runtime": "bun",
+	"packageManager": "bun",
+	"frontends": ["next", "native"],
+	"api": "trpc",
+	"server": "elysia",
+	"examples": false,
+	"git": true
+}

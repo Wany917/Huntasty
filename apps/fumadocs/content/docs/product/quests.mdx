@@ -1,0 +1,127 @@
+---
+title: Système de Quêtes
+description: Quêtes quotidiennes, hebdomadaires, spéciales et saisonnières
+icon: Target
+---
+
+# Système de Quêtes
+
+Les quêtes guident les hunters vers de nouvelles expériences et maintiennent l'engagement quotidien.
+
+## Types de quêtes
+
+### Quêtes Quotidiennes
+Renouvelées chaque jour à minuit (heure locale du hunter).
+
+**Exemples :**
+- "Hunt du Jour" : Teste un restaurant jamais visité → 15 pts
+- "Défi Budget" : Excellent repas sous le prix moyen local → 10 pts
+- "Exploration Cuisine" : Essaie une cuisine que tu n'as jamais tentée → 20 pts
+- "Hunt Social" : Emmène un ami découvrir un nouveau lieu → 25 pts
+- "Photo Master" : 3 photos de plats dans la journée → 10 pts
+
+**Limite gratuite** : 3 quêtes par semaine. Quêtes illimitées pour les abonnés Pro/Elite.
+
+### Quêtes Hebdomadaires
+Plus ambitieuses, disponibles du lundi au dimanche.
+
+**Exemples :**
+- "Weekend Challenge" : 3 hunts différents sur un weekend → 50 pts
+- "Tour du Quartier" : Visite 5 restaurants dans le même quartier → 40 pts
+- "Diversité" : 3 cuisines différentes en une semaine → 30 pts
+
+### Quêtes Spéciales
+Liées à des événements ou des partenariats.
+
+**Exemples :**
+- "Restaurant du Mois" : Visite le restaurant mis en avant → 30 pts
+- "Saison des Sakura" (printemps JP) : Hunts dans des restaurants avec terrasse → 50 pts
+- "Festival de Ramen" : 5 ramen shops différents en un mois → 100 pts
+
+### Quêtes Restaurant (Boost Premium/Elite)
+Créées par les restaurants partenaires.
+
+**Exemples :**
+- "Découvre notre nouveau menu" : Check-in + review du nouveau plat → 20 pts
+- "Soirée dégustation" : Participe à l'event du restaurant → 30 pts
+
+## Architecture technique des quêtes
+
+### Modèle de données
+
+Chaque quête est définie par des conditions en JSONB, ce qui permet une flexibilité totale :
+
+```json
+{
+  "type": "daily",
+  "conditions": {
+    "action": "review",
+    "min_count": 1,
+    "filters": {
+      "is_new_restaurant": true
+    }
+  },
+  "reward_points": 15,
+  "active_hours": {
+    "from": "00:00",
+    "to": "23:59"
+  }
+}
+```
+
+```json
+{
+  "type": "weekly",
+  "conditions": {
+    "action": "review",
+    "min_count": 3,
+    "filters": {
+      "unique_cuisines": true,
+      "min_different": 3
+    }
+  },
+  "reward_points": 30
+}
+```
+
+### Progression des quêtes
+
+Le champ `progress` dans `user_quests` track l'avancement :
+
+```json
+{
+  "required": 3,
+  "current": 1,
+  "details": [
+    {
+      "restaurant_id": "xxx",
+      "cuisine": "japonaise",
+      "completed_at": "2026-03-10T19:30:00Z"
+    }
+  ]
+}
+```
+
+### Évaluation
+
+Un job backend vérifie périodiquement (ou via événement) si les conditions d'une quête sont remplies par les actions récentes du hunter. Quand les conditions sont atteintes :
+1. Statut passe à `completed`
+2. Points attribués au hunter
+3. Notification envoyée
+4. Badge débloqué si applicable
+
+## Recommandations IA (suggestions personnalisées)
+
+3 suggestions quotidiennes maximum, basées sur :
+
+1. **Historique** : Restaurants similaires aux favoris du hunter
+2. **Communauté** : Favoris des hunters de même niveau dans la même zone
+3. **Nouveauté** : Restaurants récemment ajoutés ou peu reviewés
+4. **Proximité** : Restaurants proches de la position actuelle
+5. **Découverte aléatoire** : 10% des suggestions sont délibérément hors du profil habituel
+
+Format affiché :
+- "Parce que tu as aimé [Restaurant X]"
+- "Populaire chez les hunters de ton niveau"
+- "Nouveau dans ton quartier"
+- "Sortir de ta zone de confort ?"

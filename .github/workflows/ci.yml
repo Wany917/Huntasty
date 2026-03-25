@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Dummy values for build — pass Zod validation, no real connection
+  DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+  BETTER_AUTH_SECRET: ci-placeholder-secret-minimum-32-characters
+  BETTER_AUTH_URL: http://localhost:3000
+  CORS_ORIGIN: http://localhost:3001
+  NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+
+jobs:
+  ci:
+    name: Lint, Types, Tests & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint (Biome)
+        run: bunx biome ci .
+
+      - name: Type check
+        run: bun run check-types
+
+      - name: Test
+        run: bun run test
+
+      - name: Build
+        run: bun run build

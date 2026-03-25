@@ -1,0 +1,13 @@
+{
+	"title": "Produit",
+	"icon": "Crosshair",
+	"defaultOpen": true,
+	"pages": [
+		"index",
+		"progression",
+		"reviews",
+		"social",
+		"restaurants",
+		"quests"
+	]
+}

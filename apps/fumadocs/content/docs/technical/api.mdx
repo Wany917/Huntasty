@@ -1,0 +1,239 @@
+---
+title: API Design
+description: Architecture tRPC, routers, procedures et conventions
+icon: Route
+---
+
+# API Design
+
+L'API utilise tRPC pour garantir le type-safety end-to-end entre le backend Elysia et les clients (Next.js + Expo).
+
+## Architecture des Routers
+
+```
+appRouter
+├── health              # Health check public
+├── hunter              # Profil et progression du hunter
+├── restaurant          # Recherche et consultation restaurants
+├── restaurantAdmin     # Dashboard restaurant (protégé)
+├── review              # Création et consultation des reviews
+├── clan                # Gestion des clans
+├── quest               # Quêtes et progression
+├── groupHunt           # Hunts de groupe
+├── social              # Follows, feed, leaderboards
+├── notification        # Notifications in-app
+├── translation         # Traductions (agent LLM)
+├── upload              # Upload d'images
+└── admin               # Administration (protégé admin)
+```
+
+## Procedures détaillées
+
+### hunter
+
+```typescript
+hunter.getProfile          // publicProcedure - Profil public d'un hunter
+  input: { userId: string }
+  output: { user, stats, badges, level, recentReviews }
+
+hunter.getMyProfile        // protectedProcedure - Mon profil complet
+  output: { user, stats, badges, quests, clan, subscription }
+
+hunter.getProgress         // protectedProcedure - Détail progression
+  output: { level, points, nextLevel, pointsToNext, streak, badges }
+
+hunter.updatePreferences   // protectedProcedure
+  input: { locale?, cuisinePreferences?, budgetRange?, dietaryRestrictions? }
+
+hunter.getLeaderboard      // publicProcedure
+  input: { scope: 'local' | 'national' | 'global', period: 'week' | 'month' | 'alltime', city?, limit? }
+  output: { hunters: Array<{ rank, user, points, level }> }
+```
+
+### restaurant
+
+```typescript
+restaurant.search          // publicProcedure
+  input: { query?, cuisineTypes?, priceRange?, latitude?, longitude?,
+           radius?, isOpenNow?, sortBy: 'distance' | 'score' | 'hunts', limit?, cursor? }
+  output: { restaurants: Array<{ restaurant, stats, distance? }>, nextCursor }
+
+restaurant.getById         // publicProcedure
+  input: { id: string, locale?: string }
+  output: { restaurant, stats, menu, photos, recentReviews, translations }
+
+restaurant.getNearby       // publicProcedure
+  input: { latitude, longitude, radius?: number, limit?: number }
+  output: { restaurants: Array<{ restaurant, stats, distance }> }
+
+restaurant.getSuggestions  // protectedProcedure
+  output: { suggestions: Array<{ restaurant, reason: string }> } // max 3
+
+restaurant.getMenu         // publicProcedure
+  input: { restaurantId, locale?: string }
+  output: { categories: Array<{ name, items: Array<MenuItem> }> }
+```
+
+### restaurantAdmin
+
+```typescript
+// Toutes les procedures nécessitent: restaurant_owner ou manager role
+
+restaurantAdmin.getAnalytics     // protectedProcedure
+  input: { restaurantId, period: 'week' | 'month' | 'quarter' | 'year' }
+  output: { hunts, score, evolution, hunterDistribution, topDishes, peakTimes }
+
+restaurantAdmin.updateProfile    // protectedProcedure
+  input: { restaurantId, name?, address?, phone?, openingHours?, ... }
+
+restaurantAdmin.respondToReview  // protectedProcedure
+  input: { reviewId, content: string }
+
+restaurantAdmin.manageTeam       // protectedProcedure (owner only)
+  input: { action: 'invite' | 'remove' | 'updateRole', email?, userId?, role? }
+
+restaurantAdmin.updateMenu       // protectedProcedure
+  input: { restaurantId, items: Array<{ id?, name, price, category, ... }> }
+```
+
+### review
+
+```typescript
+review.create              // protectedProcedure
+  input: {
+    restaurantId, type: 'check_in' | 'quick_snap' | 'full_review',
+    rating: 1-5,
+    tasteRating?, serviceRating?, ambianceRating?, valueRating?, // full_review
+    content?, // texte (full_review) ou emojis (quick_snap)
+    pricePaid?, currency?,
+    recommendedFor?: string[],
+    tags?: string[],
+    photoUrls?: string[], // URLs R2 après upload
+    latitude, longitude, // vérification géoloc
+    groupHuntId? // si hunt de groupe
+  }
+  output: { review, pointsEarned, isFirstDiscoverer, newBadges?, levelUp? }
+
+review.getByRestaurant     // publicProcedure
+  input: { restaurantId, sortBy: 'relevant' | 'recent' | 'rating', cursor?, limit? }
+  output: { reviews: Array<{ review, user, photos }>, nextCursor }
+
+review.getByUser           // publicProcedure
+  input: { userId, cursor?, limit? }
+
+review.like                // protectedProcedure
+  input: { reviewId }
+
+review.unlike              // protectedProcedure
+  input: { reviewId }
+
+review.report              // protectedProcedure
+  input: { reviewId, reason: 'fake' | 'inappropriate' | 'spam' | 'other', details? }
+```
+
+### clan
+
+```typescript
+clan.create                // protectedProcedure (confirmed+ level)
+  input: { name, description, cuisineSpecialty?, maxMembers?, minHunterLevel? }
+  output: { clan }
+
+clan.search                // publicProcedure
+  input: { query?, cuisineSpecialty?, city?, level?, cursor? }
+
+clan.getById               // publicProcedure
+  input: { clanId }
+  output: { clan, members, challenges, stats }
+
+clan.requestJoin           // protectedProcedure
+  input: { clanId }
+
+clan.handleJoinRequest     // protectedProcedure (leader/officer)
+  input: { clanId, userId, action: 'accept' | 'reject' }
+
+clan.leave                 // protectedProcedure
+  input: { clanId }
+
+clan.getLeaderboard        // publicProcedure
+  input: { period: 'week' | 'month' | 'season', cursor? }
+
+clan.chat.list             // protectedProcedure (members only)
+  input: { clanId, cursor? }
+
+clan.chat.send             // protectedProcedure (members only)
+  input: { clanId, content, type: 'text' | 'photo' | 'hunt_share' }
+```
+
+### quest
+
+```typescript
+quest.getActive            // protectedProcedure
+  output: { daily: Quest[], weekly: Quest[], special: Quest[] }
+
+quest.getMyProgress        // protectedProcedure
+  output: { activeQuests: Array<{ quest, progress, status }> }
+
+quest.claim                // protectedProcedure
+  input: { questId }
+  output: { pointsAwarded, newBadges? }
+```
+
+### social
+
+```typescript
+social.follow              // protectedProcedure
+  input: { userId }
+
+social.unfollow            // protectedProcedure
+  input: { userId }
+
+social.getFeed             // protectedProcedure
+  input: { cursor?, limit? }
+  output: { items: Array<FeedItem>, nextCursor }
+  // FeedItem = review | badge_earned | level_up | group_hunt | clan_challenge
+
+social.getFollowers        // publicProcedure
+  input: { userId, cursor? }
+
+social.getFollowing        // publicProcedure
+  input: { userId, cursor? }
+```
+
+### translation
+
+```typescript
+translation.get            // publicProcedure
+  input: { entityType, entityId, field, locale }
+  output: { content, source, confidenceScore? }
+
+translation.requestTranslation  // protectedProcedure
+  input: { entityType, entityId, fields: string[], targetLocale }
+  output: { translations: Array<{ field, content, source }> }
+  // Déclenche la traduction LLM si pas en cache
+```
+
+## Conventions
+
+### Pagination
+Cursor-based partout (pas d'OFFSET). Le cursor est un identifiant opaque encodé (typiquement `id` ou `created_at + id`).
+
+```typescript
+input: { cursor?: string, limit?: number } // default limit: 20, max: 50
+output: { items: T[], nextCursor?: string } // null si fin de liste
+```
+
+### Gestion d'erreurs
+tRPC error codes standards :
+- `UNAUTHORIZED` : Non authentifié
+- `FORBIDDEN` : Authentifié mais pas les permissions
+- `NOT_FOUND` : Ressource inexistante
+- `BAD_REQUEST` : Input invalide (Zod)
+- `TOO_MANY_REQUESTS` : Rate limit
+- `INTERNAL_SERVER_ERROR` : Erreur serveur
+
+### Rate Limiting
+Implémenté via middleware Redis :
+- Public procedures : 100 req/min par IP
+- Protected procedures : 200 req/min par user
+- Write procedures (create/update) : 30 req/min par user
+- Upload : 10 req/min par user

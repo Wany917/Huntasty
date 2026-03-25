@@ -1,0 +1,3 @@
+{
+	"extends": "@Huntasty/config/tsconfig.base.json"
+}

@@ -1,0 +1,6 @@
+{
+	"title": "Business",
+	"icon": "TrendingUp",
+	"defaultOpen": true,
+	"pages": ["index", "monetization", "roadmap"]
+}

@@ -1,0 +1,17 @@
+{
+	"title": "Technique",
+	"icon": "Server",
+	"defaultOpen": true,
+	"pages": [
+		"index",
+		"database",
+		"api",
+		"auth",
+		"i18n",
+		"infrastructure",
+		"security",
+		"performance",
+		"conventions",
+		"contributing"
+	]
+}

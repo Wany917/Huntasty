@@ -1,0 +1,25 @@
+{
+	"name": "@Huntasty/auth",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		}
+	},
+	"scripts": {},
+	"dependencies": {
+		"@Huntasty/db": "workspace:*",
+		"@Huntasty/env": "workspace:*",
+		"@better-auth/expo": "catalog:",
+		"better-auth": "catalog:",
+		"dotenv": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@Huntasty/config": "workspace:*",
+		"typescript": "^5"
+	}
+}

@@ -1,0 +1,30 @@
+{
+	"name": "@Huntasty/api",
+	"type": "module",
+	"exports": {
+		".": {
+			"default": "./src/index.ts"
+		},
+		"./*": {
+			"default": "./src/*.ts"
+		}
+	},
+	"scripts": {
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@Huntasty/auth": "workspace:*",
+		"@Huntasty/db": "workspace:*",
+		"@Huntasty/env": "workspace:*",
+		"@trpc/client": "catalog:",
+		"@trpc/server": "catalog:",
+		"dotenv": "catalog:",
+		"drizzle-orm": "^0.45.1",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@Huntasty/config": "workspace:*",
+		"elysia": "catalog:",
+		"typescript": "^5"
+	}
+}

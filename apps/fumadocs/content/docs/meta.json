@@ -1,0 +1,14 @@
+{
+	"title": "Huntasty",
+	"root": true,
+	"defaultOpen": true,
+	"pages": [
+		"index",
+		"---[ShoppingBag]Produit---",
+		"product",
+		"---[Code]Technique---",
+		"technical",
+		"---[Briefcase]Business---",
+		"business"
+	]
+}
