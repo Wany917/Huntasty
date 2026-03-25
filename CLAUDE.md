@@ -2,7 +2,7 @@
 
 ## Project
 
-Gamified culinary discovery app. Turborepo monorepo with Bun.
+Gamified culinary discovery app. Nx monorepo with Bun.
 
 ## Package Manager
 

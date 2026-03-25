@@ -9,7 +9,7 @@ Gamified culinary discovery app — find, review, and compete around the best fo
 - **Backend**: Elysia + tRPC
 - **Database**: PostgreSQL + PostGIS + Drizzle ORM
 - **Auth**: Better Auth
-- **Monorepo**: Turborepo + Bun
+- **Monorepo**: Nx + Bun
 
 ## Structure
 

@@ -1,16 +1,19 @@
 {
-	"$schema": "https://turbo.build/schema.json",
-	"ui": "tui",
-	"tasks": {
+	"$schema": "./node_modules/nx/schemas/nx-schema.json",
+	"extends": "nx/presets/npm.json",
+	"cli": { "packageManager": "bun" },
+	"targetDefaults": {
 		"build": {
+			"cache": true,
 			"dependsOn": ["^build"],
-			"inputs": ["$TURBO_DEFAULT$", ".env*"],
-			"outputs": ["dist/**", ".next/**"]
+			"outputs": ["{projectRoot}/dist", "{projectRoot}/.next"]
 		},
 		"lint": {
+			"cache": true,
 			"dependsOn": ["^lint"]
 		},
 		"check-types": {
+			"cache": true,
 			"dependsOn": ["^check-types"]
 		},
 		"dev": {
@@ -46,8 +49,8 @@
 			"cache": false
 		},
 		"test": {
-			"dependsOn": ["^build"],
-			"cache": false
+			"cache": true,
+			"dependsOn": ["^build"]
 		}
 	}
 }

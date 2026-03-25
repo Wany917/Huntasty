@@ -125,10 +125,10 @@ sequenceDiagram
 
   DEV->>GH: Push PR
   GH->>CI: Trigger ci.yml
-  CI->>CI: turbo check-types
+  CI->>CI: nx run-many -t check-types
   CI->>CI: biome check
   CI->>CI: bun test
-  CI->>CI: turbo build
+  CI->>CI: nx run-many -t build
   CI-->>GH: Status ✓ / ✗
 
   DEV->>GH: Merge PR → main

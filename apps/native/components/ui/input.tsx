@@ -41,10 +41,7 @@ export function Input({
 					{...props}
 				/>
 				{secureTextEntry && (
-					<Pressable
-						onPress={() => setHidden((h) => !h)}
-						hitSlop={8}
-					>
+					<Pressable onPress={() => setHidden((h) => !h)} hitSlop={8}>
 						<Ionicons
 							name={hidden ? "eye-off-outline" : "eye-outline"}
 							size={20}
